@@ -80,7 +80,7 @@ export default function LocationPicker({ value, onChange }) {
             }
 
             onChange({ lat, lon });
-            setStatus(`Ubicación aproximada aplicada: ${data.city || "?"}, ${data.region || "?"}.`);
+            setStatus(`Ubicación aproximada aplicada (IP): ${data.city || "?"}, ${data.region || "?"}. \n IP puede ser inexacta; usa GPS o introduce coordenadas`);
         } catch (e) {
             setStatus(`No se pudo obtener ubicación por IP: ${String(e?.message || e)}`);
         }
