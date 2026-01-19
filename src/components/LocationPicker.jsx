@@ -7,43 +7,104 @@ export default function LocationPicker({ value, onChange }) {
         onChange({ ...value, [field]: v });
     }
 
-    function useGeolocation() {
-        if (!navigator.geolocation) {
+    function humanGeoError(err) {
+        if (!err) return "Error desconocido.";
+        if (err.code === 1) return "Permiso denegado. Activa la ubicación para este sitio.";
+        if (err.code === 2) return "Posición no disponible (CoreLocation/servicios de localización no disponibles).";
+        if (err.code === 3) return "Tiempo de espera agotado al obtener la posición.";
+        return err.message || "Error desconocido.";
+    }
+
+    function requestPosition(options) {
+        return new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+    }
+
+    async function useGeolocation() {
+        if (!("geolocation" in navigator)) {
             setStatus("Tu navegador no soporta geolocalización.");
             return;
         }
+        if (!window.isSecureContext) {
+            setStatus("La geolocalización requiere HTTPS.");
+            return;
+        }
 
-        setStatus("Obteniendo ubicación...");
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-                onChange({ lat, lon });
-                setStatus("Ubicación detectada.");
-            },
-            (err) => {
-                setStatus(`No se pudo obtener ubicación: ${err.message}`);
-            },
-            { enableHighAccuracy: true, timeout: 10000 }
-        );
+        setStatus("Obteniendo ubicación (GPS/servicios del sistema)…");
+
+        // Intento 1: alta precisión
+        try {
+            const pos = await requestPosition({
+                enableHighAccuracy: true,
+                timeout: 12000,
+                maximumAge: 0,
+            });
+            onChange({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+            setStatus("Ubicación detectada (alta precisión).");
+            return;
+        } catch (e1) {
+            // Intento 2: precisión estándar
+            try {
+                setStatus("Reintentando con precisión estándar…");
+                const pos = await requestPosition({
+                    enableHighAccuracy: false,
+                    timeout: 20000,
+                    maximumAge: 300000,
+                });
+                onChange({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                setStatus("Ubicación detectada (precisión estándar).");
+                return;
+            } catch (e2) {
+                setStatus(`${humanGeoError(e2)} Puedes usar ubicación aproximada por IP o introducir coordenadas.`);
+            }
+        }
+    }
+
+    async function useIpLocation() {
+        // Fallback sin permisos: ubicación aproximada por IP
+        setStatus("Obteniendo ubicación aproximada por IP…");
+        try {
+            // ipapi.co suele funcionar bien sin API key
+            const res = await fetch("https://ipapi.co/json/");
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            const lat = Number(data.latitude);
+            const lon = Number(data.longitude);
+
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                throw new Error("No se recibieron coordenadas válidas desde el servicio IP.");
+            }
+
+            onChange({ lat, lon });
+            setStatus(`Ubicación aproximada aplicada: ${data.city || "?"}, ${data.region || "?"}.`);
+        } catch (e) {
+            setStatus(`No se pudo obtener ubicación por IP: ${String(e?.message || e)}`);
+        }
     }
 
     return (
-        <section style={box}>
-            <h2 style={h2}>1) Ubicación</h2>
+        <section className="card">
+            <h2 className="card__title">1) Ubicación</h2>
 
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <button onClick={useGeolocation} style={btn}>
-                    Usar mi ubicación
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <button className="btn" onClick={useGeolocation} type="button">
+                    Usar mi ubicación (GPS)
                 </button>
-                <span style={{ opacity: 0.8 }}>{status}</span>
+
+                <button className="btn" onClick={useIpLocation} type="button" style={{ background: "#fff", color: "#111" }}>
+                    Usar ubicación aproximada (IP)
+                </button>
+
+                <span className="help">{status}</span>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
-                <label style={label}>
+                <label className="field">
                     Latitud
                     <input
-                        style={input}
+                        className="input"
                         type="number"
                         step="any"
                         value={value.lat ?? ""}
@@ -52,10 +113,10 @@ export default function LocationPicker({ value, onChange }) {
                     />
                 </label>
 
-                <label style={label}>
+                <label className="field">
                     Longitud
                     <input
-                        style={input}
+                        className="input"
                         type="number"
                         step="any"
                         value={value.lon ?? ""}
@@ -65,21 +126,9 @@ export default function LocationPicker({ value, onChange }) {
                 </label>
             </div>
 
-            <p style={{ marginTop: 10, opacity: 0.8 }}>
-                Consejo: si pruebas desde PC sin GPS, mete coordenadas manuales (por ejemplo Madrid:
-                40.4168, -3.7038).
+            <p className="help" style={{ marginTop: 10 }}>
+                Si el GPS falla (por ejemplo, CoreLocation “LocationUnknown”), puedes usar IP (aproximado) o introducir coordenadas manualmente.
             </p>
         </section>
     );
 }
-
-const box = {
-    border: "1px solid #ddd",
-    borderRadius: 12,
-    padding: 16,
-};
-
-const h2 = { margin: "0 0 12px" };
-const label = { display: "grid", gap: 6, fontSize: 14 };
-const input = { padding: 10, borderRadius: 10, border: "1px solid #ccc" };
-const btn = { padding: "10px 12px", borderRadius: 10, border: "1px solid #ccc", cursor: "pointer" };
