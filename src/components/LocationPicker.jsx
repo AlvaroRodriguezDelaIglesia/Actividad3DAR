@@ -62,13 +62,15 @@ export default function LocationPicker({ value, onChange }) {
     }
 
     async function useIpLocation() {
-        // Fallback sin permisos: ubicación aproximada por IP
         setStatus("Obteniendo ubicación aproximada por IP…");
         try {
-            // ipapi.co suele funcionar bien sin API key
-            const res = await fetch("https://ipapi.co/json/");
+            const res = await fetch("https://ipwho.is/");
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+
+            if (!data.success) {
+                throw new Error(data.message || "El servicio IP no pudo determinar la ubicación.");
+            }
 
             const lat = Number(data.latitude);
             const lon = Number(data.longitude);
@@ -83,6 +85,7 @@ export default function LocationPicker({ value, onChange }) {
             setStatus(`No se pudo obtener ubicación por IP: ${String(e?.message || e)}`);
         }
     }
+
 
     return (
         <section className="card">
