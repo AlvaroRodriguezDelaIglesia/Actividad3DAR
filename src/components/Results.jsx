@@ -2,8 +2,8 @@ import StationCard from "./StationCard";
 
 export default function Results({ candidates, nearest, cheapest, fuelLabel, radiusKm }) {
     return (
-        <section style={box}>
-            <h2 style={h2}>3) Resultados</h2>
+        <section className="card">
+            <h2 className="card__title">3) Resultados</h2>
 
             <p style={{ marginTop: 0, opacity: 0.8 }}>
                 Carburante: <strong>{fuelLabel}</strong> · Radio: <strong>{radiusKm} km</strong> · Coincidencias:{" "}

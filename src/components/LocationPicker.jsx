@@ -29,8 +29,8 @@ export default function LocationPicker({ value, onChange }) {
     }
 
     return (
-        <section style={box}>
-            <h2 style={h2}>1) Ubicación</h2>
+        <section className="card">
+            <h2 className="card__title" >1) Ubicación</h2>
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <button onClick={useGeolocation} style={btn}>

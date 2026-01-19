@@ -11,8 +11,8 @@ export default function Filters({
                                     loading,
                                 }) {
     return (
-        <section style={box}>
-            <h2 style={h2}>2) Filtros</h2>
+        <section className="card">
+            <h2 className="card__title">2) Filtros</h2>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <label style={label}>
