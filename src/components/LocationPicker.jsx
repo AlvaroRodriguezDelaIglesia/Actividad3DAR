@@ -23,21 +23,14 @@ export default function LocationPicker({ value, onChange }) {
             },
             (err) => {
                 setStatus(`No se pudo obtener ubicación: ${err.message}`);
-                if (err.code === 1) msg = "Permiso denegado: permite la ubicación en el navegador.";
-                if (err.code === 2) msg = "Ubicación no disponible: revisa GPS/Wi-Fi o servicios de localización.";
-                if (err.code === 3) msg = "Tiempo de espera agotado: vuelve a intentarlo.";
-
-                setStatus(`${msg} (${err.message})`);
             },
-            { enableHighAccuracy: true,
-                timeout: 20000,
-                maximumAge: 0, }
+            { enableHighAccuracy: true, timeout: 10000 }
         );
     }
 
     return (
-        <section className="card">
-            <h2 className="card__title" >1) Ubicación</h2>
+        <section style={box}>
+            <h2 style={h2}>1) Ubicación</h2>
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <button onClick={useGeolocation} style={btn}>
