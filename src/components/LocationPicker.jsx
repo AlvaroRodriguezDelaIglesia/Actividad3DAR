@@ -33,7 +33,7 @@ export default function LocationPicker({ value, onChange }) {
 
         setStatus("Obteniendo ubicación (GPS/servicios del sistema)…");
 
-        // Intento 1: alta precisión
+        
         try {
             const pos = await requestPosition({
                 enableHighAccuracy: true,
@@ -44,7 +44,7 @@ export default function LocationPicker({ value, onChange }) {
             setStatus("Ubicación detectada (alta precisión).");
             return;
         } catch (e1) {
-            // Intento 2: precisión estándar
+            
             try {
                 setStatus("Reintentando con precisión estándar…");
                 const pos = await requestPosition({
